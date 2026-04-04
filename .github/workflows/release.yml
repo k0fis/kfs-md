@@ -167,7 +167,7 @@ jobs:
       - name: Checkout homebrew tap
         uses: actions/checkout@v4
         with:
-          repository: k0fis/homebrew
+          repository: k0fis/homebrew-tap
           token: ${{ secrets.DEPLOY_TOKEN }}
 
       - name: Download DMG and compute SHA256
