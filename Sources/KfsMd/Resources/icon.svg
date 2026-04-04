@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" rx="180" ry="180" fill="#1a1a2e"/>
+  <text x="480" y="340" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="320" fill="#55d4e8" opacity="0.80">KFS</text>
+  <text x="560" y="720" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="420" fill="#3daa3d" opacity="0.95">MD</text>
+</svg>
