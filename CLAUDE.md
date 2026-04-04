@@ -13,7 +13,8 @@ Stack: **Swift 5.9+ / SwiftUI / MarkdownUI** (SPM package). Document-based app (
 ```bash
 swift build                      # Build (debug)
 swift build -c release           # Build (release)
-swift run                        # Run app
+swift run                        # Run app (dev mode, no Dock icon)
+open build/kfs-md.app            # Run as .app bundle (Dock icon works)
 swift package resolve            # Resolve SPM dependencies
 ```
 
@@ -22,13 +23,13 @@ swift package resolve            # Resolve SPM dependencies
 - **Document-based app**: `DocumentGroup` + `FileDocument` → automatický Open/Save, Recent Documents, tabs
 - **Dva režimy zobrazení**: `.md` → MarkdownUI rendered, `.txt/.log/.nfo` → monospace plain text
 - **View/Edit toggle**: Cmd+E přepíná mezi prohlížením a editací
-- **Dark mode enforced**: `NSApp.appearance = .darkAqua`
+- **Dark mode**: `.preferredColorScheme(.dark)` na root view
 
 ### Source Modules
 
 | Soubor | Obsah |
 |--------|-------|
-| `Sources/KfsMd/KfsMdApp.swift` | @main, DocumentGroup, font registrace |
+| `Sources/KfsMd/KfsMdApp.swift` | @main, DocumentGroup, font registrace (Bundle.main → fallback SPM bundle) |
 | `Sources/KfsMd/MarkdownDocument.swift` | FileDocument protocol, UTType routing |
 | `Sources/KfsMd/Views/ContentView.swift` | Router: viewer vs editor, mode toggle |
 | `Sources/KfsMd/Views/MarkdownViewerView.swift` | MarkdownUI rendered view |
@@ -36,6 +37,12 @@ swift package resolve            # Resolve SPM dependencies
 | `Sources/KfsMd/Views/EditorView.swift` | TextEditor pro raw editaci |
 | `Sources/KfsMd/Theme/DarkTerminalTheme.swift` | Custom MarkdownUI theme |
 | `Sources/KfsMd/Theme/AppColors.swift` | Barevná paleta |
+
+### Gotchas
+
+- **Font loading**: NEPOUŽÍVAT `Bundle.module` přímo — crashuje v .app bundlu. Kód v `KfsMdApp.swift` hledá fonty nejdřív v `Bundle.main` (pro .app), pak fallback na SPM resource bundle (pro `swift run`).
+- **`swift run` vs `.app`**: `swift run` spouští bez Dock ikony a bez Info.plist file associations. Pro plný test vytvořit lokální .app bundle (viz `build/` adresář nebo CI workflow).
+- **Gatekeeper**: Ad-hoc signed → po instalaci nutný `xattr -cr /Applications/kfs-md.app` nebo "Open Anyway" v System Settings → Privacy & Security.
 
 ### Podporované formáty
 
@@ -48,7 +55,21 @@ swift package resolve            # Resolve SPM dependencies
 
 | Workflow | Trigger | Výstup |
 |----------|---------|--------|
-| `release.yml` | tag `v*` | macOS DMG → GitHub Release |
+| `release.yml` | tag `v*` | 1) Build → DMG → GitHub Release  2) Auto-update SHA256 v `k0fis/homebrew-tap` |
+
+Release vyžaduje secret `DEPLOY_TOKEN` (GitHub PAT s repo scope pro push do homebrew-tap).
+
+## Distribuce
+
+```bash
+# Release nové verze:
+git tag v0.x.y && git push origin v0.x.y
+# → CI automaticky: build → DMG → Release → aktualizace Homebrew cask
+
+# Instalace:
+brew tap k0fis/tap
+brew install --cask kfs-md
+```
 
 ## Dependency
 
