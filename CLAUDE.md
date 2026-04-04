@@ -78,4 +78,6 @@ Jediná: `gonzalezreal/swift-markdown-ui` 2.4+ (MarkdownUI).
 ## Plánované (v2+)
 
 - Konverze kódování (CP850, CP852, CP1250) pro staré texty
+- Zoom in/out (Cmd+/Cmd-) pro zvětšení/zmenšení fontu
 - Syntax highlighting v code blocích
+- Outline sidebar (obsah z headings)
