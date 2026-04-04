@@ -51,10 +51,13 @@ jobs:
           cp .build/release/KfsMd "${MACOS_DIR}/${APP_NAME}"
 
           # Fonts
-          FONT_DIR=$(find .build -path "*/KfsMd_KfsMd.bundle/Fonts" -type d | head -1)
+          FONT_DIR=$(find .build -path "*/kfs-md_KfsMd.bundle/Fonts" -type d | head -1)
           if [ -n "$FONT_DIR" ]; then
             cp "$FONT_DIR"/*.ttf "${RES_DIR}/Fonts/"
           fi
+
+          # Icon
+          cp Sources/KfsMd/Resources/AppIcon.icns "${RES_DIR}/"
 
           # Info.plist
           TAG=${GITHUB_REF_NAME:-0.1.0}
@@ -80,6 +83,8 @@ jobs:
             <string>APPL</string>
             <key>NSHighResolutionCapable</key>
             <true/>
+            <key>CFBundleIconFile</key>
+            <string>AppIcon</string>
             <key>ATSApplicationFontsPath</key>
             <string>Fonts</string>
             <key>CFBundleDocumentTypes</key>
