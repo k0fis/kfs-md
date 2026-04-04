@@ -158,3 +158,36 @@ jobs:
         with:
           generate_release_notes: true
           files: artifacts/*
+
+  update-homebrew:
+    name: Update Homebrew Cask
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: k0fis/homebrew
+          token: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Download DMG and compute SHA256
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          curl -sL "https://github.com/k0fis/kfs-md/releases/download/${GITHUB_REF_NAME}/kfs-md-macos-arm64.dmg" -o kfs-md.dmg
+          SHA=$(shasum -a 256 kfs-md.dmg | awk '{print $1}')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "SHA256=$SHA" >> $GITHUB_ENV
+
+      - name: Update cask formula
+        run: |
+          sed -i "s/version \".*\"/version \"$VERSION\"/" Casks/kfs-md.rb
+          sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" Casks/kfs-md.rb
+          cat Casks/kfs-md.rb
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add Casks/kfs-md.rb
+          git commit -m "Update kfs-md to v$VERSION"
+          git push
