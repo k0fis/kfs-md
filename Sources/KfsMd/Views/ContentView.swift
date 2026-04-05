@@ -55,7 +55,7 @@ struct ContentView: View {
                         searchText: searchText,
                         currentMatchIndex: currentMatchIndex
                     )
-                } else if document.isMarkdown {
+                } else if document.isMarkdown && searchText.isEmpty {
                     MarkdownViewerView(text: document.text, fontSize: fontSize)
                 } else {
                     PlainTextViewerView(

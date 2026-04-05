@@ -69,6 +69,13 @@ struct PlainTextViewerView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(AppColors.background)
+            .onChange(of: searchText) { _ in
+                if let lineIdx = currentMatchLineIndex() {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        proxy.scrollTo(lineIdx, anchor: .center)
+                    }
+                }
+            }
             .onChange(of: currentMatchIndex) { _ in
                 if let lineIdx = currentMatchLineIndex() {
                     withAnimation(.easeInOut(duration: 0.3)) {
