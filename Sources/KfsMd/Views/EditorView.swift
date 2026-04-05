@@ -6,6 +6,7 @@ struct EditorView: NSViewRepresentable {
     let fontSize: CGFloat
     let searchText: String
     let currentMatchIndex: Int
+    let highlightedLine: Int?
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -62,12 +63,19 @@ struct EditorView: NSViewRepresentable {
             textView.font = font
         }
 
-        // Search highlighting
-        let shouldScroll = context.coordinator.lastMatchIndex != currentMatchIndex
+        // Search highlighting (clears all temp attributes first)
+        let shouldScrollSearch = context.coordinator.lastMatchIndex != currentMatchIndex
             || context.coordinator.lastSearchText != searchText
-        highlightSearch(in: textView, scrollToMatch: shouldScroll)
+        highlightSearch(in: textView, scrollToMatch: shouldScrollSearch)
         context.coordinator.lastMatchIndex = currentMatchIndex
         context.coordinator.lastSearchText = searchText
+
+        // Go-to-line highlighting (applied after search, so it's on top)
+        let goToChanged = highlightedLine != context.coordinator.lastHighlightedLine
+        if let line = highlightedLine {
+            highlightGoToLine(line, in: textView, scroll: goToChanged)
+        }
+        context.coordinator.lastHighlightedLine = highlightedLine
     }
 
     private func highlightSearch(in textView: NSTextView, scrollToMatch: Bool) {
@@ -103,6 +111,32 @@ struct EditorView: NSViewRepresentable {
         }
     }
 
+    private func highlightGoToLine(_ lineNumber: Int, in textView: NSTextView, scroll: Bool) {
+        guard let layoutManager = textView.layoutManager else { return }
+        let nsString = textView.string as NSString
+        guard nsString.length > 0 else { return }
+
+        // Find the NSRange for the target line
+        var currentLine = 1
+        var index = 0
+
+        while index < nsString.length && currentLine < lineNumber {
+            let lineRange = nsString.lineRange(for: NSRange(location: index, length: 0))
+            index = NSMaxRange(lineRange)
+            currentLine += 1
+        }
+
+        guard currentLine == lineNumber else { return }
+        let lineRange = nsString.lineRange(for: NSRange(location: min(index, nsString.length - 1), length: 0))
+
+        let highlightColor = NSColor(AppColors.goToLineHighlight)
+        layoutManager.addTemporaryAttribute(.backgroundColor, value: highlightColor, forCharacterRange: lineRange)
+
+        if scroll {
+            textView.scrollRangeToVisible(lineRange)
+        }
+    }
+
     // MARK: - Coordinator
 
     class Coordinator: NSObject, NSTextViewDelegate {
@@ -111,6 +145,7 @@ struct EditorView: NSViewRepresentable {
         var updatedByUser = false
         var lastMatchIndex = -1
         var lastSearchText = ""
+        var lastHighlightedLine: Int? = nil
 
         init(_ parent: EditorView) {
             self.parent = parent

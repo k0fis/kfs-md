@@ -5,6 +5,7 @@ struct PlainTextViewerView: View {
     let searchText: String
     let fontSize: CGFloat
     let currentMatchIndex: Int
+    let highlightedLine: Int?
 
     private var lines: [String] {
         text.components(separatedBy: "\n")
@@ -52,15 +53,21 @@ struct PlainTextViewerView: View {
             ScrollView([.horizontal, .vertical]) {
                 LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(allLines.enumerated()), id: \.offset) { index, line in
+                        let isGoToTarget = highlightedLine != nil && index == (highlightedLine! - 1)
+
                         if searchText.isEmpty {
                             Text(line.isEmpty ? " " : line)
                                 .font(.custom("JetBrains Mono", size: fontSize))
                                 .foregroundStyle(AppColors.textPrimary)
                                 .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(isGoToTarget ? AppColors.goToLineHighlight : Color.clear)
                                 .id(index)
                         } else {
                             Text(highlightLine(line, globalOffset: offsets[index]))
                                 .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(isGoToTarget ? AppColors.goToLineHighlight : Color.clear)
                                 .id(index)
                         }
                     }
@@ -92,6 +99,12 @@ struct PlainTextViewerView: View {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         proxy.scrollTo(lineIdx, anchor: .center)
                     }
+                }
+            }
+            .onChange(of: highlightedLine) { newValue in
+                guard let line = newValue else { return }
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    proxy.scrollTo(line - 1, anchor: .center)
                 }
             }
         }

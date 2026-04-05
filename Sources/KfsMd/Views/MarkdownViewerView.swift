@@ -6,6 +6,7 @@ struct MarkdownViewerView: View {
     let fontSize: CGFloat
     let searchText: String
     let currentMatchIndex: Int
+    let highlightedLine: Int?
 
     private var blocks: [String] {
         splitMarkdownBlocks(text)
@@ -36,6 +37,39 @@ struct MarkdownViewerView: View {
         return nil
     }
 
+    /// Find which block contains a given line number (1-based).
+    private func blockIndexForLine(_ targetLine: Int) -> Int? {
+        guard targetLine >= 1 else { return nil }
+        let allLines = text.components(separatedBy: "\n")
+        guard targetLine <= allLines.count else { return nil }
+
+        var blockIndex = 0
+        var currentBlockHasContent = false
+        var inCodeFence = false
+
+        for (i, line) in allLines.enumerated() {
+            if line.trimmingCharacters(in: .whitespaces).hasPrefix("```") {
+                inCodeFence = !inCodeFence
+            }
+
+            let isSep = !inCodeFence
+                && line.trimmingCharacters(in: .whitespaces).isEmpty
+                && currentBlockHasContent
+
+            if isSep {
+                blockIndex += 1
+                currentBlockHasContent = false
+            } else {
+                currentBlockHasContent = true
+            }
+
+            if i + 1 == targetLine {
+                return blockIndex
+            }
+        }
+        return nil
+    }
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -43,6 +77,7 @@ struct MarkdownViewerView: View {
                     ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
                         let isCurrentBlock = !searchText.isEmpty && currentMatchBlockIndex() == index
                         let hasMatch = !searchText.isEmpty && countMatches(in: block) > 0
+                        let isGoToTarget = highlightedLine != nil && blockIndexForLine(highlightedLine!) == index
 
                         Markdown(block)
                             .markdownTheme(.darkTerminal(fontSize: fontSize))
@@ -52,11 +87,13 @@ struct MarkdownViewerView: View {
                             .padding(.horizontal, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 4)
-                                    .fill(isCurrentBlock
-                                          ? AppColors.currentMatchHighlight.opacity(0.2)
-                                          : hasMatch
-                                            ? AppColors.searchHighlight
-                                            : Color.clear)
+                                    .fill(isGoToTarget
+                                          ? AppColors.goToLineHighlight
+                                          : isCurrentBlock
+                                            ? AppColors.currentMatchHighlight.opacity(0.2)
+                                            : hasMatch
+                                              ? AppColors.searchHighlight
+                                              : Color.clear)
                             )
                             .id(index)
                     }
@@ -75,6 +112,12 @@ struct MarkdownViewerView: View {
             .onChange(of: searchText) { _ in
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     scrollToMatch(proxy: proxy)
+                }
+            }
+            .onChange(of: highlightedLine) { newValue in
+                guard let line = newValue, let blockIdx = blockIndexForLine(line) else { return }
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    proxy.scrollTo(blockIdx, anchor: .center)
                 }
             }
         }

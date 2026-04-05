@@ -25,6 +25,7 @@ swift package resolve            # Resolve SPM dependencies
 - **View/Edit toggle**: Cmd+E přepíná mezi prohlížením a editací
 - **Dark mode**: `.preferredColorScheme(.dark)` na root view
 - **Search (Cmd+F or `/` in view mode)**: Search bar s počtem výskytů a navigací (next/prev). Current match oranžový, ostatní žluté. Cmd+G / Cmd+Shift+G pro next/prev, Enter pro next. V view mode klávesy `n`/`p` pro navigaci
+- **Go to Line (Cmd+L)**: Skok na řádek s červeným zvýrazněním (fade-out po 2s). V markdown view scrolluje na blok obsahující cílový řádek
 - **Zoom (Cmd+=/Cmd-)**: Změna velikosti fontu 9–36pt, proporcionální škálování headings v markdown
 
 ### Source Modules
@@ -33,11 +34,11 @@ swift package resolve            # Resolve SPM dependencies
 |--------|-------|
 | `Sources/KfsMd/KfsMdApp.swift` | @main, DocumentGroup, font registrace (Bundle.main → fallback SPM bundle) |
 | `Sources/KfsMd/MarkdownDocument.swift` | FileDocument protocol, UTType routing |
-| `Sources/KfsMd/Views/ContentView.swift` | Router: viewer vs editor, search state, zoom, toolbar shortcuts, ViewModeKeyHandler (klávesy `/`/`n`/`p`) |
+| `Sources/KfsMd/Views/ContentView.swift` | Router: viewer vs editor, search state, go-to-line, zoom, toolbar shortcuts, ViewModeKeyHandler (klávesy `/`/`n`/`p`) |
 | `Sources/KfsMd/Views/MarkdownViewerView.swift` | MarkdownUI rendered view s dynamickým fontSize |
 | `Sources/KfsMd/Views/PlainTextViewerView.swift` | Monospace plain text view, search highlighting (current match orange, others yellow), scroll-to-match |
 | `Sources/KfsMd/Views/EditorView.swift` | NSViewRepresentable (NSTextView) se search highlighting přes layoutManager |
-| `Sources/KfsMd/Views/SearchBarView.swift` | Search bar: text field, match count, next/prev buttons (Cmd+G / Cmd+Shift+G) |
+| `Sources/KfsMd/Views/SearchBarView.swift` | Search bar + GoToLineBarView (Cmd+L) |
 | `Sources/KfsMd/Theme/DarkTerminalTheme.swift` | Custom MarkdownUI theme, dynamický fontSize se škálováním |
 | `Sources/KfsMd/Theme/AppColors.swift` | Barevná paleta |
 

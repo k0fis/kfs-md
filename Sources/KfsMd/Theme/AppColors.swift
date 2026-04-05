@@ -23,4 +23,7 @@ enum AppColors {
     // Search
     static let searchHighlight = Color(red: 0.95, green: 0.80, blue: 0.20).opacity(0.35)   // dim yellow
     static let currentMatchHighlight = Color(red: 1.0, green: 0.60, blue: 0.10)             // bright orange
+
+    // Go to line
+    static let goToLineHighlight = Color(red: 1.0, green: 0.30, blue: 0.30).opacity(0.3)   // red tint
 }

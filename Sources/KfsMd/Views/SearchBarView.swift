@@ -63,3 +63,46 @@ struct SearchBarView: View {
         .onAppear { isFocused = true }
     }
 }
+
+// MARK: - Go To Line Bar
+
+struct GoToLineBarView: View {
+    @Binding var lineText: String
+    let totalLines: Int
+    let onGo: (Int) -> Void
+    let onClose: () -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "arrow.right.to.line")
+                .foregroundStyle(AppColors.textSecondary)
+
+            TextField("Line (1–\(totalLines))…", text: $lineText)
+                .textFieldStyle(.plain)
+                .font(.custom("JetBrains Mono", size: 13))
+                .foregroundStyle(AppColors.textPrimary)
+                .focused($isFocused)
+                .onSubmit {
+                    if let num = Int(lineText), num >= 1, num <= totalLines {
+                        onGo(num)
+                    }
+                }
+
+            Text("/ \(totalLines)")
+                .font(.custom("JetBrains Mono", size: 11))
+                .foregroundStyle(AppColors.textSecondary)
+
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .foregroundStyle(AppColors.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.escape, modifiers: [])
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.black.opacity(0.5))
+        .onAppear { isFocused = true }
+    }
+}

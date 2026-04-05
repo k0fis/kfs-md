@@ -7,7 +7,15 @@ struct ContentView: View {
     @State private var isSearching = false
     @State private var searchText = ""
     @State private var currentMatchIndex = 0
+    @State private var showGoToLine = false
+    @State private var goToLineText = ""
+    @State private var highlightedLine: Int? = nil
+    @State private var highlightGeneration = 0
     @State private var fontSize: CGFloat = 13
+
+    private var totalLines: Int {
+        document.text.components(separatedBy: "\n").count
+    }
 
     private var matchCount: Int {
         guard !searchText.isEmpty else { return 0 }
@@ -31,6 +39,19 @@ struct ContentView: View {
         currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount
     }
 
+    private func goToLine(_ line: Int) {
+        let gen = highlightGeneration + 1
+        highlightGeneration = gen
+        highlightedLine = line
+        showGoToLine = false
+        goToLineText = ""
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if highlightGeneration == gen {
+                highlightedLine = nil
+            }
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             if isSearching {
@@ -47,27 +68,42 @@ struct ContentView: View {
                 )
             }
 
+            if showGoToLine {
+                GoToLineBarView(
+                    lineText: $goToLineText,
+                    totalLines: totalLines,
+                    onGo: goToLine,
+                    onClose: {
+                        showGoToLine = false
+                        goToLineText = ""
+                    }
+                )
+            }
+
             Group {
                 if isEditing {
                     EditorView(
                         text: $document.text,
                         fontSize: fontSize,
                         searchText: searchText,
-                        currentMatchIndex: currentMatchIndex
+                        currentMatchIndex: currentMatchIndex,
+                        highlightedLine: highlightedLine
                     )
                 } else if document.isMarkdown {
                     MarkdownViewerView(
                         text: document.text,
                         fontSize: fontSize,
                         searchText: searchText,
-                        currentMatchIndex: currentMatchIndex
+                        currentMatchIndex: currentMatchIndex,
+                        highlightedLine: highlightedLine
                     )
                 } else {
                     PlainTextViewerView(
                         text: document.text,
                         searchText: searchText,
                         fontSize: fontSize,
-                        currentMatchIndex: currentMatchIndex
+                        currentMatchIndex: currentMatchIndex,
+                        highlightedLine: highlightedLine
                     )
                 }
             }
@@ -85,6 +121,12 @@ struct ContentView: View {
         .onChange(of: searchText) { _ in
             currentMatchIndex = 0
         }
+        .onChange(of: isSearching) { newValue in
+            if newValue { showGoToLine = false; goToLineText = "" }
+        }
+        .onChange(of: showGoToLine) { newValue in
+            if newValue { isSearching = false; searchText = "" }
+        }
         .toolbar {
             ToolbarItem(placement: .automatic) {
                 Button {
@@ -94,6 +136,16 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("f", modifiers: .command)
                 .help("Find (⌘F)")
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showGoToLine = true
+                } label: {
+                    Image(systemName: "arrow.right.to.line")
+                }
+                .keyboardShortcut("l", modifiers: .command)
+                .help("Go to Line (⌘L)")
             }
 
             ToolbarItem(placement: .automatic) {
