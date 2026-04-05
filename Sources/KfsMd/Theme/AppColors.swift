@@ -19,4 +19,10 @@ enum AppColors {
     // Links & accents
     static let link = Color(red: 0.40, green: 0.85, blue: 0.95)         // cyan
     static let blockquoteBorder = Color.yellow.opacity(0.5)
+
+    // Search
+    static let searchHighlight = Color(red: 0.95, green: 0.80, blue: 0.20) // yellow
+
+    // Line numbers
+    static let lineNumber = Color.white.opacity(0.30)
 }

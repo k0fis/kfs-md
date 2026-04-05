@@ -2,6 +2,9 @@ import SwiftUI
 
 @main
 struct KfsMdApp: App {
+    @FocusedBinding(\.isSearchActive) var isSearchActive
+    @FocusedBinding(\.isGoToLineActive) var isGoToLineActive
+
     init() {
         registerBundledFonts()
     }
@@ -12,6 +15,20 @@ struct KfsMdApp: App {
                 .preferredColorScheme(.dark)
         }
         .defaultSize(width: 820, height: 900)
+        .commands {
+            CommandGroup(after: .textEditing) {
+                Divider()
+                Button("Find…") {
+                    isSearchActive = true
+                }
+                .keyboardShortcut("f", modifiers: .command)
+
+                Button("Go to Line…") {
+                    isGoToLineActive = true
+                }
+                .keyboardShortcut("g", modifiers: .command)
+            }
+        }
     }
 
     private func registerBundledFonts() {
