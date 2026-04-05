@@ -12,13 +12,21 @@ struct EditorView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
-        guard let textView = scrollView.documentView as? NSTextView else {
-            return scrollView
-        }
-
+        // Force TextKit 1 — macOS 15 defaults to TextKit 2 where layoutManager is nil
         let font = NSFont(name: "JetBrains Mono", size: fontSize)
             ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor(AppColors.textPrimary)
+        ]
+        let textStorage = NSTextStorage(string: text, attributes: attrs)
+        let layoutManager = NSLayoutManager()
+        textStorage.addLayoutManager(layoutManager)
+        let textContainer = NSTextContainer(size: NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
+        textContainer.widthTracksTextView = true
+        layoutManager.addTextContainer(textContainer)
+
+        let textView = NSTextView(frame: .zero, textContainer: textContainer)
         textView.font = font
         textView.textColor = NSColor(AppColors.textPrimary)
         textView.backgroundColor = NSColor(AppColors.background)
@@ -33,12 +41,20 @@ struct EditorView: NSViewRepresentable {
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.textContainerInset = NSSize(width: 16, height: 16)
         textView.usesFindBar = false
-        textView.string = text
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
         textView.delegate = context.coordinator
         context.coordinator.textView = textView
 
+        let scrollView = NSScrollView()
+        scrollView.documentView = textView
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.drawsBackground = false
+
         // Line number ruler
-        let ruler = LineNumberRulerView(textView: textView, fontSize: fontSize)
+        let ruler = LineNumberRulerView(textView: textView, scrollView: scrollView, fontSize: fontSize)
         scrollView.verticalRulerView = ruler
         scrollView.hasVerticalRuler = true
         scrollView.rulersVisible = showLineNumbers
@@ -130,10 +146,10 @@ class LineNumberRulerView: NSRulerView {
     var fontSize: CGFloat
     private weak var textView: NSTextView?
 
-    init(textView: NSTextView, fontSize: CGFloat) {
+    init(textView: NSTextView, scrollView: NSScrollView, fontSize: CGFloat) {
         self.textView = textView
         self.fontSize = fontSize
-        super.init(scrollView: textView.enclosingScrollView!, orientation: .verticalRuler)
+        super.init(scrollView: scrollView, orientation: .verticalRuler)
         self.clientView = textView
         updateThickness(for: textView.string)
 
@@ -144,7 +160,7 @@ class LineNumberRulerView: NSRulerView {
         NotificationCenter.default.addObserver(
             self, selector: #selector(needsRedisplay),
             name: NSView.boundsDidChangeNotification,
-            object: textView.enclosingScrollView?.contentView
+            object: scrollView.contentView
         )
     }
 
@@ -172,7 +188,7 @@ class LineNumberRulerView: NSRulerView {
         rect.fill()
 
         // Separator
-        NSColor.white.withAlphaComponent(0.1).set()
+        NSColor.white.withAlphaComponent(0.15).set()
         let sepRect = NSRect(x: ruleThickness - 1, y: rect.origin.y, width: 1, height: rect.height)
         sepRect.fill()
 
@@ -180,7 +196,7 @@ class LineNumberRulerView: NSRulerView {
             ?? .monospacedSystemFont(ofSize: fontSize - 1, weight: .regular)
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: NSColor(AppColors.lineNumber)
+            .foregroundColor: NSColor.white.withAlphaComponent(0.40)
         ]
 
         let visibleRect = textView.visibleRect

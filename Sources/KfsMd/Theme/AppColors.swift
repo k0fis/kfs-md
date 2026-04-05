@@ -24,5 +24,5 @@ enum AppColors {
     static let searchHighlight = Color(red: 0.95, green: 0.80, blue: 0.20) // yellow
 
     // Line numbers
-    static let lineNumber = Color.white.opacity(0.30)
+    static let lineNumber = Color.white.opacity(0.40)
 }
