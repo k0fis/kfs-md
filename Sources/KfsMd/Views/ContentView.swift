@@ -12,6 +12,11 @@ struct ContentView: View {
     @State private var highlightedLine: Int? = nil
     @State private var highlightGeneration = 0
     @State private var fontSize: CGFloat = 13
+    @State private var renderMarkdown: Bool? = nil  // nil = auto (based on file type)
+
+    private var isRenderedMarkdown: Bool {
+        renderMarkdown ?? document.isMarkdown
+    }
 
     private var totalLines: Int {
         document.text.components(separatedBy: "\n").count
@@ -89,7 +94,7 @@ struct ContentView: View {
                         currentMatchIndex: currentMatchIndex,
                         highlightedLine: highlightedLine
                     )
-                } else if document.isMarkdown {
+                } else if isRenderedMarkdown {
                     MarkdownViewerView(
                         text: document.text,
                         fontSize: fontSize,
@@ -146,6 +151,15 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("l", modifiers: .command)
                 .help("Go to Line (⌘L)")
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    renderMarkdown = !isRenderedMarkdown
+                } label: {
+                    Image(systemName: isRenderedMarkdown ? "doc.plaintext" : "doc.richtext")
+                }
+                .help(isRenderedMarkdown ? "Plain text" : "Rendered markdown")
             }
 
             ToolbarItem(placement: .automatic) {
