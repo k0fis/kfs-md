@@ -24,9 +24,7 @@ swift package resolve            # Resolve SPM dependencies
 - **Dva režimy zobrazení**: `.md` → MarkdownUI rendered, `.txt/.log/.nfo` → monospace plain text
 - **View/Edit toggle**: Cmd+E přepíná mezi prohlížením a editací
 - **Dark mode**: `.preferredColorScheme(.dark)` na root view
-- **Search (Cmd+F)**: Search bar s počtem výskytů, case-insensitive. Žluté zvýraznění v plain text vieweru i editoru
-- **Go to Line (Cmd+G)**: Skok na řádek s animací (plain text viewer)
-- **Line numbers**: Toggleable čísla řádků v plain text vieweru (LazyVStack + gutter) i editoru (NSRulerView)
+- **Search (Cmd+F or `/` in view mode)**: Search bar s počtem výskytů a navigací (next/prev). Current match oranžový, ostatní žluté. Cmd+G / Cmd+Shift+G pro next/prev, Enter pro next. V view mode klávesy `n`/`p` pro navigaci
 - **Zoom (Cmd+=/Cmd-)**: Změna velikosti fontu 9–36pt, proporcionální škálování headings v markdown
 
 ### Source Modules
@@ -35,11 +33,11 @@ swift package resolve            # Resolve SPM dependencies
 |--------|-------|
 | `Sources/KfsMd/KfsMdApp.swift` | @main, DocumentGroup, font registrace (Bundle.main → fallback SPM bundle) |
 | `Sources/KfsMd/MarkdownDocument.swift` | FileDocument protocol, UTType routing |
-| `Sources/KfsMd/Views/ContentView.swift` | Router: viewer vs editor, search/goToLine/zoom state, toolbar shortcuts |
+| `Sources/KfsMd/Views/ContentView.swift` | Router: viewer vs editor, search state, zoom, toolbar shortcuts, ViewModeKeyHandler (klávesy `/`/`n`/`p`) |
 | `Sources/KfsMd/Views/MarkdownViewerView.swift` | MarkdownUI rendered view s dynamickým fontSize |
-| `Sources/KfsMd/Views/PlainTextViewerView.swift` | Monospace plain text view, line numbers, search highlighting, scroll-to-line |
-| `Sources/KfsMd/Views/EditorView.swift` | NSViewRepresentable (NSTextView) s line number ruler a search highlighting |
-| `Sources/KfsMd/Views/SearchBarView.swift` | SearchBarView (Cmd+F) a GoToLineBarView (Cmd+G) |
+| `Sources/KfsMd/Views/PlainTextViewerView.swift` | Monospace plain text view, search highlighting (current match orange, others yellow), scroll-to-match |
+| `Sources/KfsMd/Views/EditorView.swift` | NSViewRepresentable (NSTextView) se search highlighting přes layoutManager |
+| `Sources/KfsMd/Views/SearchBarView.swift` | Search bar: text field, match count, next/prev buttons (Cmd+G / Cmd+Shift+G) |
 | `Sources/KfsMd/Theme/DarkTerminalTheme.swift` | Custom MarkdownUI theme, dynamický fontSize se škálováním |
 | `Sources/KfsMd/Theme/AppColors.swift` | Barevná paleta |
 
@@ -48,8 +46,8 @@ swift package resolve            # Resolve SPM dependencies
 - **Font loading**: NEPOUŽÍVAT `Bundle.module` přímo — crashuje v .app bundlu. Kód v `KfsMdApp.swift` hledá fonty nejdřív v `Bundle.main` (pro .app), pak fallback na SPM resource bundle (pro `swift run`).
 - **`swift run` vs `.app`**: `swift run` spouští bez Dock ikony a bez Info.plist file associations. Pro plný test vytvořit lokální .app bundle (viz `build/` adresář nebo CI workflow).
 - **Gatekeeper**: Ad-hoc signed → po instalaci nutný `xattr -cr /Applications/kfs-md.app` nebo "Open Anyway" v System Settings → Privacy & Security.
-- **EditorView je NSViewRepresentable**: Používá `NSTextView` (ne SwiftUI TextEditor) kvůli line number ruler a search highlighting přes `layoutManager.addTemporaryAttribute`. Koordinátor sleduje `textDidChange` a synchronizuje `@Binding var text`.
-- **Keyboard shortcuts**: Řešené přes toolbar buttons s `.keyboardShortcut()`. FocusedBinding/FocusedValue nefungoval spolehlivě s DocumentGroup.
+- **EditorView je NSViewRepresentable**: Používá `NSTextView` (ne SwiftUI TextEditor) kvůli search highlighting přes `layoutManager.addTemporaryAttribute`. Přístup `_ = textView.layoutManager` vynutí TextKit 1 kompatibilitu (macOS 15 defaultuje TextKit 2). Koordinátor sleduje `textDidChange` a synchronizuje `@Binding var text`.
+- **Keyboard shortcuts**: Řešené přes toolbar buttons s `.keyboardShortcut()`. FocusedBinding/FocusedValue nefungoval spolehlivě s DocumentGroup. View mode klávesy (`/`, `n`, `p`) řešené přes `NSEvent.addLocalMonitorForEvents` v `ViewModeKeyHandler`.
 
 ### Podporované formáty
 

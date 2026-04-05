@@ -1,19 +1,13 @@
 import SwiftUI
+import AppKit
 
 struct ContentView: View {
     @Binding var document: MarkdownDocument
     @State private var isEditing = false
     @State private var isSearching = false
     @State private var searchText = ""
-    @State private var showGoToLine = false
-    @State private var goToLineText = ""
-    @State private var showLineNumbers = true
-    @State private var scrollToLine: Int? = nil
+    @State private var currentMatchIndex = 0
     @State private var fontSize: CGFloat = 13
-
-    private var totalLines: Int {
-        document.text.components(separatedBy: "\n").count
-    }
 
     private var matchCount: Int {
         guard !searchText.isEmpty else { return 0 }
@@ -27,31 +21,28 @@ struct ContentView: View {
         return count
     }
 
+    private func nextMatch() {
+        guard matchCount > 0 else { return }
+        currentMatchIndex = (currentMatchIndex + 1) % matchCount
+    }
+
+    private func prevMatch() {
+        guard matchCount > 0 else { return }
+        currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             if isSearching {
                 SearchBarView(
                     searchText: $searchText,
                     matchCount: matchCount,
+                    currentMatch: currentMatchIndex,
+                    onNext: nextMatch,
+                    onPrev: prevMatch,
                     onClose: {
                         isSearching = false
                         searchText = ""
-                    }
-                )
-            }
-
-            if showGoToLine {
-                GoToLineBarView(
-                    lineText: $goToLineText,
-                    totalLines: totalLines,
-                    onGo: { line in
-                        scrollToLine = line
-                        showGoToLine = false
-                        goToLineText = ""
-                    },
-                    onClose: {
-                        showGoToLine = false
-                        goToLineText = ""
                     }
                 )
             }
@@ -61,30 +52,33 @@ struct ContentView: View {
                     EditorView(
                         text: $document.text,
                         fontSize: fontSize,
-                        showLineNumbers: showLineNumbers,
-                        searchText: searchText
+                        searchText: searchText,
+                        currentMatchIndex: currentMatchIndex
                     )
-                } else if document.isMarkdown && !showLineNumbers {
+                } else if document.isMarkdown {
                     MarkdownViewerView(text: document.text, fontSize: fontSize)
                 } else {
                     PlainTextViewerView(
                         text: document.text,
                         searchText: searchText,
-                        showLineNumbers: showLineNumbers,
                         fontSize: fontSize,
-                        scrollToLine: $scrollToLine
+                        currentMatchIndex: currentMatchIndex
                     )
                 }
             }
         }
         .frame(minWidth: 500, minHeight: 400)
         .background(AppColors.background)
-        // Mutual exclusivity: only one bar at a time
-        .onChange(of: isSearching) { newValue in
-            if newValue { showGoToLine = false; goToLineText = "" }
-        }
-        .onChange(of: showGoToLine) { newValue in
-            if newValue { isSearching = false; searchText = "" }
+        .background(
+            ViewModeKeyHandler(
+                onSlash: { isSearching = true },
+                onN: nextMatch,
+                onP: prevMatch
+            )
+            .frame(width: 0, height: 0)
+        )
+        .onChange(of: searchText) { _ in
+            currentMatchIndex = 0
         }
         .toolbar {
             ToolbarItem(placement: .automatic) {
@@ -95,25 +89,6 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("f", modifiers: .command)
                 .help("Find (⌘F)")
-            }
-
-            ToolbarItem(placement: .automatic) {
-                Button {
-                    showGoToLine = true
-                } label: {
-                    Image(systemName: "arrow.right.to.line")
-                }
-                .keyboardShortcut("g", modifiers: .command)
-                .help("Go to Line (⌘G)")
-            }
-
-            ToolbarItem(placement: .automatic) {
-                Button {
-                    showLineNumbers.toggle()
-                } label: {
-                    Image(systemName: showLineNumbers ? "list.number" : "list.bullet")
-                }
-                .help(showLineNumbers ? "Hide line numbers" : "Show line numbers")
             }
 
             ToolbarItem(placement: .automatic) {
@@ -144,6 +119,80 @@ struct ContentView: View {
                     Text(isEditing ? "View" : "Edit")
                 }
                 .keyboardShortcut("e", modifiers: .command)
+            }
+        }
+    }
+}
+
+// MARK: - View Mode Key Handler
+
+struct ViewModeKeyHandler: NSViewRepresentable {
+    let onSlash: () -> Void
+    let onN: () -> Void
+    let onP: () -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = KeyHandlerView()
+        view.onSlash = onSlash
+        view.onN = onN
+        view.onP = onP
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        guard let view = nsView as? KeyHandlerView else { return }
+        view.onSlash = onSlash
+        view.onN = onN
+        view.onP = onP
+    }
+
+    class KeyHandlerView: NSView {
+        var onSlash: (() -> Void)?
+        var onN: (() -> Void)?
+        var onP: (() -> Void)?
+        private var monitor: Any?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if window != nil && monitor == nil {
+                monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                    guard let self = self,
+                          event.window == self.window else { return event }
+
+                    // Don't intercept when typing in an editable text field/editor
+                    if let responder = event.window?.firstResponder as? NSText,
+                       responder.isEditable {
+                        return event
+                    }
+
+                    let significantFlags: NSEvent.ModifierFlags = [.command, .shift, .control, .option]
+                    guard event.modifierFlags.intersection(significantFlags).isEmpty else {
+                        return event
+                    }
+
+                    switch event.charactersIgnoringModifiers {
+                    case "/":
+                        self.onSlash?()
+                        return nil
+                    case "n":
+                        self.onN?()
+                        return nil
+                    case "p":
+                        self.onP?()
+                        return nil
+                    default:
+                        return event
+                    }
+                }
+            } else if window == nil, let monitor = monitor {
+                NSEvent.removeMonitor(monitor)
+                self.monitor = nil
+            }
+        }
+
+        deinit {
+            if let monitor = monitor {
+                NSEvent.removeMonitor(monitor)
             }
         }
     }

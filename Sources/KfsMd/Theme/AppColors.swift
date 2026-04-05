@@ -21,8 +21,6 @@ enum AppColors {
     static let blockquoteBorder = Color.yellow.opacity(0.5)
 
     // Search
-    static let searchHighlight = Color(red: 0.95, green: 0.80, blue: 0.20) // yellow
-
-    // Line numbers
-    static let lineNumber = Color.white.opacity(0.40)
+    static let searchHighlight = Color(red: 0.95, green: 0.80, blue: 0.20).opacity(0.35)   // dim yellow
+    static let currentMatchHighlight = Color(red: 1.0, green: 0.60, blue: 0.10)             // bright orange
 }
