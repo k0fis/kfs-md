@@ -133,6 +133,7 @@ struct EditorView: NSViewRepresentable {
         layoutManager.addTemporaryAttribute(.backgroundColor, value: highlightColor, forCharacterRange: lineRange)
 
         if scroll {
+            textView.setSelectedRange(NSRange(location: lineRange.location, length: 0))
             textView.scrollRangeToVisible(lineRange)
         }
     }
