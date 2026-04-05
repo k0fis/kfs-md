@@ -64,7 +64,7 @@ struct ContentView: View {
                         showLineNumbers: showLineNumbers,
                         searchText: searchText
                     )
-                } else if document.isMarkdown {
+                } else if document.isMarkdown && !showLineNumbers {
                     MarkdownViewerView(text: document.text, fontSize: fontSize)
                 } else {
                     PlainTextViewerView(

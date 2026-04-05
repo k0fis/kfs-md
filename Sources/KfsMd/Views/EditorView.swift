@@ -12,21 +12,16 @@ struct EditorView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        // Force TextKit 1 — macOS 15 defaults to TextKit 2 where layoutManager is nil
+        let scrollView = NSTextView.scrollableTextView()
+        guard let textView = scrollView.documentView as? NSTextView else {
+            return scrollView
+        }
+
+        // Force TextKit 1 — accessing layoutManager triggers compatibility switch from TextKit 2
+        _ = textView.layoutManager
+
         let font = NSFont(name: "JetBrains Mono", size: fontSize)
             ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: NSColor(AppColors.textPrimary)
-        ]
-        let textStorage = NSTextStorage(string: text, attributes: attrs)
-        let layoutManager = NSLayoutManager()
-        textStorage.addLayoutManager(layoutManager)
-        let textContainer = NSTextContainer(size: NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
-        textContainer.widthTracksTextView = true
-        layoutManager.addTextContainer(textContainer)
-
-        let textView = NSTextView(frame: .zero, textContainer: textContainer)
         textView.font = font
         textView.textColor = NSColor(AppColors.textPrimary)
         textView.backgroundColor = NSColor(AppColors.background)
@@ -41,23 +36,16 @@ struct EditorView: NSViewRepresentable {
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.textContainerInset = NSSize(width: 16, height: 16)
         textView.usesFindBar = false
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.autoresizingMask = [.width]
+        textView.string = text
         textView.delegate = context.coordinator
         context.coordinator.textView = textView
-
-        let scrollView = NSScrollView()
-        scrollView.documentView = textView
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
-        scrollView.drawsBackground = false
 
         // Line number ruler
         let ruler = LineNumberRulerView(textView: textView, scrollView: scrollView, fontSize: fontSize)
         scrollView.verticalRulerView = ruler
         scrollView.hasVerticalRuler = true
         scrollView.rulersVisible = showLineNumbers
+        scrollView.drawsBackground = false
 
         return scrollView
     }
