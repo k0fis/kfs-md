@@ -1,28 +1,5 @@
 import SwiftUI
 
-// MARK: - Focused value keys for menu commands
-
-private struct FocusedSearchKey: FocusedValueKey {
-    typealias Value = Binding<Bool>
-}
-
-private struct FocusedGoToLineKey: FocusedValueKey {
-    typealias Value = Binding<Bool>
-}
-
-extension FocusedValues {
-    var isSearchActive: Binding<Bool>? {
-        get { self[FocusedSearchKey.self] }
-        set { self[FocusedSearchKey.self] = newValue }
-    }
-    var isGoToLineActive: Binding<Bool>? {
-        get { self[FocusedGoToLineKey.self] }
-        set { self[FocusedGoToLineKey.self] = newValue }
-    }
-}
-
-// MARK: - ContentView
-
 struct ContentView: View {
     @Binding var document: MarkdownDocument
     @State private var isEditing = false
@@ -32,6 +9,7 @@ struct ContentView: View {
     @State private var goToLineText = ""
     @State private var showLineNumbers = true
     @State private var scrollToLine: Int? = nil
+    @State private var fontSize: CGFloat = 13
 
     private var totalLines: Int {
         document.text.components(separatedBy: "\n").count
@@ -80,14 +58,20 @@ struct ContentView: View {
 
             Group {
                 if isEditing {
-                    EditorView(text: $document.text)
+                    EditorView(
+                        text: $document.text,
+                        fontSize: fontSize,
+                        showLineNumbers: showLineNumbers,
+                        searchText: searchText
+                    )
                 } else if document.isMarkdown {
-                    MarkdownViewerView(text: document.text)
+                    MarkdownViewerView(text: document.text, fontSize: fontSize)
                 } else {
                     PlainTextViewerView(
                         text: document.text,
                         searchText: searchText,
                         showLineNumbers: showLineNumbers,
+                        fontSize: fontSize,
                         scrollToLine: $scrollToLine
                     )
                 }
@@ -95,8 +79,6 @@ struct ContentView: View {
         }
         .frame(minWidth: 500, minHeight: 400)
         .background(AppColors.background)
-        .focusedValue(\.isSearchActive, $isSearching)
-        .focusedValue(\.isGoToLineActive, $showGoToLine)
         // Mutual exclusivity: only one bar at a time
         .onChange(of: isSearching) { newValue in
             if newValue { showGoToLine = false; goToLineText = "" }
@@ -105,14 +87,24 @@ struct ContentView: View {
             if newValue { isSearching = false; searchText = "" }
         }
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItem(placement: .automatic) {
                 Button {
-                    isEditing.toggle()
+                    isSearching = true
                 } label: {
-                    Image(systemName: isEditing ? "eye" : "pencil")
-                    Text(isEditing ? "View" : "Edit")
+                    Image(systemName: "magnifyingglass")
                 }
-                .keyboardShortcut("e", modifiers: .command)
+                .keyboardShortcut("f", modifiers: .command)
+                .help("Find (⌘F)")
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showGoToLine = true
+                } label: {
+                    Image(systemName: "arrow.right.to.line")
+                }
+                .keyboardShortcut("g", modifiers: .command)
+                .help("Go to Line (⌘G)")
             }
 
             ToolbarItem(placement: .automatic) {
@@ -122,6 +114,36 @@ struct ContentView: View {
                     Image(systemName: showLineNumbers ? "list.number" : "list.bullet")
                 }
                 .help(showLineNumbers ? "Hide line numbers" : "Show line numbers")
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    fontSize = max(fontSize - 1, 9)
+                } label: {
+                    Image(systemName: "minus.magnifyingglass")
+                }
+                .keyboardShortcut("-", modifiers: .command)
+                .help("Zoom Out (⌘-)")
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    fontSize = min(fontSize + 1, 36)
+                } label: {
+                    Image(systemName: "plus.magnifyingglass")
+                }
+                .keyboardShortcut("=", modifiers: .command)
+                .help("Zoom In (⌘+)")
+            }
+
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    isEditing.toggle()
+                } label: {
+                    Image(systemName: isEditing ? "eye" : "pencil")
+                    Text(isEditing ? "View" : "Edit")
+                }
+                .keyboardShortcut("e", modifiers: .command)
             }
         }
     }

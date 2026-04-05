@@ -4,6 +4,7 @@ struct PlainTextViewerView: View {
     let text: String
     let searchText: String
     let showLineNumbers: Bool
+    let fontSize: CGFloat
     @Binding var scrollToLine: Int?
 
     private var lines: [String] {
@@ -12,7 +13,7 @@ struct PlainTextViewerView: View {
 
     private var gutterWidth: CGFloat {
         let digits = max(String(lines.count).count, 2)
-        return CGFloat(digits) * 8 + 12
+        return CGFloat(digits) * (fontSize * 0.62) + 16
     }
 
     var body: some View {
@@ -23,7 +24,7 @@ struct PlainTextViewerView: View {
                         HStack(alignment: .top, spacing: 0) {
                             if showLineNumbers {
                                 Text("\(index + 1)")
-                                    .font(.custom("JetBrains Mono", size: 13))
+                                    .font(.custom("JetBrains Mono", size: fontSize))
                                     .foregroundStyle(AppColors.lineNumber)
                                     .frame(minWidth: gutterWidth, alignment: .trailing)
                                     .padding(.trailing, 12)
@@ -31,7 +32,7 @@ struct PlainTextViewerView: View {
 
                             if searchText.isEmpty {
                                 Text(line.isEmpty ? " " : line)
-                                    .font(.custom("JetBrains Mono", size: 13))
+                                    .font(.custom("JetBrains Mono", size: fontSize))
                                     .foregroundStyle(AppColors.textPrimary)
                                     .textSelection(.enabled)
                             } else {
@@ -60,7 +61,7 @@ struct PlainTextViewerView: View {
         let displayLine = line.isEmpty ? " " : line
         guard !searchText.isEmpty else {
             var result = AttributedString(displayLine)
-            result.font = .custom("JetBrains Mono", size: 13)
+            result.font = .custom("JetBrains Mono", size: fontSize)
             result.foregroundColor = AppColors.textPrimary
             return result
         }
@@ -71,17 +72,15 @@ struct PlainTextViewerView: View {
         var searchStart = displayLine.startIndex
         while searchStart < displayLine.endIndex,
               let range = displayLine.range(of: searchText, options: .caseInsensitive, range: searchStart..<displayLine.endIndex) {
-            // Text before match
             if lastEnd < range.lowerBound {
                 var before = AttributedString(displayLine[lastEnd..<range.lowerBound])
-                before.font = .custom("JetBrains Mono", size: 13)
+                before.font = .custom("JetBrains Mono", size: fontSize)
                 before.foregroundColor = AppColors.textPrimary
                 result += before
             }
 
-            // Matched text
             var match = AttributedString(displayLine[range])
-            match.font = .custom("JetBrains Mono", size: 13)
+            match.font = .custom("JetBrains Mono", size: fontSize)
             match.foregroundColor = .black
             match.backgroundColor = AppColors.searchHighlight
             result += match
@@ -90,10 +89,9 @@ struct PlainTextViewerView: View {
             searchStart = range.upperBound
         }
 
-        // Remaining text after last match
         if lastEnd < displayLine.endIndex {
             var remaining = AttributedString(displayLine[lastEnd...])
-            remaining.font = .custom("JetBrains Mono", size: 13)
+            remaining.font = .custom("JetBrains Mono", size: fontSize)
             remaining.foregroundColor = AppColors.textPrimary
             result += remaining
         }
