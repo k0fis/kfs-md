@@ -7,7 +7,7 @@ struct MarkdownDocument: FileDocument {
     var fileType: UTType
 
     static var readableContentTypes: [UTType] {
-        [.markdown, .plainText, .log, .xml, .json]
+        [.markdown, .plainText, .log, .xml, .json, .nfo]
     }
 
     static var writableContentTypes: [UTType] {
@@ -44,4 +44,5 @@ struct MarkdownDocument: FileDocument {
 extension UTType {
     static let markdown = UTType("net.daringfireball.markdown") ?? .plainText
     static let log = UTType("public.log") ?? .plainText
+    static let nfo = UTType(filenameExtension: "nfo") ?? .plainText
 }

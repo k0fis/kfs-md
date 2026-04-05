@@ -128,6 +128,26 @@ jobs:
                 </array>
               </dict>
             </array>
+            <key>UTImportedTypeDeclarations</key>
+            <array>
+              <dict>
+                <key>UTTypeIdentifier</key>
+                <string>eu.kofis.nfo</string>
+                <key>UTTypeDescription</key>
+                <string>NFO Text File</string>
+                <key>UTTypeConformsTo</key>
+                <array>
+                  <string>public.plain-text</string>
+                </array>
+                <key>UTTypeTagSpecification</key>
+                <dict>
+                  <key>public.filename-extension</key>
+                  <array>
+                    <string>nfo</string>
+                  </array>
+                </dict>
+              </dict>
+            </array>
           </dict>
           </plist>
           EOF
