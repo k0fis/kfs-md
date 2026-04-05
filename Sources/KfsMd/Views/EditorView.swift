@@ -135,6 +135,7 @@ struct EditorView: NSViewRepresentable {
         if scroll {
             textView.setSelectedRange(NSRange(location: lineRange.location, length: 0))
             textView.scrollRangeToVisible(lineRange)
+            textView.window?.makeFirstResponder(textView)
         }
     }
 
