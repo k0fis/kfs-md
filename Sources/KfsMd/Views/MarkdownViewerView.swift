@@ -99,8 +99,7 @@ struct MarkdownViewerView: View {
                     }
                 }
                 .padding(32)
-                .frame(maxWidth: 720, alignment: .leading)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(AppColors.background)
             .onAppear {
