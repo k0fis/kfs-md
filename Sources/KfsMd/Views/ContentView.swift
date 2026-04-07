@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var fontSize: CGFloat = 13
     @State private var renderMarkdown: Bool? = nil  // nil = auto (based on file type)
     @State private var showCopiedFeedback = false
+    @State private var showJiraCopiedFeedback = false
 
     private var isRenderedMarkdown: Bool {
         renderMarkdown ?? document.isMarkdown
@@ -160,6 +161,20 @@ struct ContentView: View {
 
             ToolbarItem(placement: .automatic) {
                 Button {
+                    ClipboardHelper.copyAsJira(markdown: document.text)
+                    showJiraCopiedFeedback = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        showJiraCopiedFeedback = false
+                    }
+                } label: {
+                    Image(systemName: showJiraCopiedFeedback ? "checkmark" : "ticket")
+                }
+                .keyboardShortcut("j", modifiers: [.command, .shift])
+                .help("Copy as Jira (⌘⇧J)")
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Button {
                     showGoToLine = true
                 } label: {
                     Image(systemName: "arrow.right.to.line")
@@ -205,6 +220,7 @@ struct ContentView: View {
                     Text(isEditing ? "View" : "Edit")
                 }
                 .keyboardShortcut("e", modifiers: .command)
+                .help(isEditing ? "View Mode (⌘E)" : "Edit Mode (⌘E)")
             }
         }
     }
