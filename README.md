@@ -53,8 +53,19 @@ swift build -c release
 | Shortcut | Action |
 |----------|--------|
 | `Cmd+E` | Toggle View / Edit mode |
+| `Cmd+F` | Find in document |
+| `Cmd+G` | Next search match |
+| `Cmd+Shift+G` | Previous search match |
+| `Cmd+L` | Go to line |
+| `Cmd+Shift+C` | Copy as formatted text (RTF) to clipboard |
+| `Cmd+Shift+J` | Copy as Jira wiki markup to clipboard |
+| `Cmd++` | Zoom in |
+| `Cmd+-` | Zoom out |
 | `Cmd+O` | Open file |
 | `Cmd+S` | Save (in edit mode) |
+| `/` | Open search (in view mode) |
+| `n` | Next search match (in view mode) |
+| `p` | Previous search match (in view mode) |
 
 ## Screenshot
 
