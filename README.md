@@ -64,8 +64,6 @@ swift build -c release
 | `Cmd+O` | Open file |
 | `Cmd+S` | Save (in edit mode) |
 | `/` | Open search (in view mode) |
-| `n` | Next search match (in view mode) |
-| `p` | Previous search match (in view mode) |
 
 ## Screenshot
 

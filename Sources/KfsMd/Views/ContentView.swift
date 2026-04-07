@@ -119,9 +119,7 @@ struct ContentView: View {
         .background(AppColors.background)
         .background(
             ViewModeKeyHandler(
-                onSlash: { isSearching = true },
-                onN: nextMatch,
-                onP: prevMatch
+                onSlash: { isSearching = true }
             )
             .frame(width: 0, height: 0)
         )
@@ -230,28 +228,20 @@ struct ContentView: View {
 
 struct ViewModeKeyHandler: NSViewRepresentable {
     let onSlash: () -> Void
-    let onN: () -> Void
-    let onP: () -> Void
 
     func makeNSView(context: Context) -> NSView {
         let view = KeyHandlerView()
         view.onSlash = onSlash
-        view.onN = onN
-        view.onP = onP
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let view = nsView as? KeyHandlerView else { return }
         view.onSlash = onSlash
-        view.onN = onN
-        view.onP = onP
     }
 
     class KeyHandlerView: NSView {
         var onSlash: (() -> Void)?
-        var onN: (() -> Void)?
-        var onP: (() -> Void)?
         private var monitor: Any?
 
         override func viewDidMoveToWindow() {
@@ -272,19 +262,11 @@ struct ViewModeKeyHandler: NSViewRepresentable {
                         return event
                     }
 
-                    switch event.charactersIgnoringModifiers {
-                    case "/":
+                    if event.charactersIgnoringModifiers == "/" {
                         self.onSlash?()
                         return nil
-                    case "n":
-                        self.onN?()
-                        return nil
-                    case "p":
-                        self.onP?()
-                        return nil
-                    default:
-                        return event
                     }
+                    return event
                 }
             } else if window == nil, let monitor = monitor {
                 NSEvent.removeMonitor(monitor)
