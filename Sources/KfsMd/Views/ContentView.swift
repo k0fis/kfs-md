@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var highlightGeneration = 0
     @State private var fontSize: CGFloat = 13
     @State private var renderMarkdown: Bool? = nil  // nil = auto (based on file type)
+    @State private var showCopiedFeedback = false
 
     private var isRenderedMarkdown: Bool {
         renderMarkdown ?? document.isMarkdown
@@ -141,6 +142,20 @@ struct ContentView: View {
                 }
                 .keyboardShortcut("f", modifiers: .command)
                 .help("Find (⌘F)")
+            }
+
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    ClipboardHelper.copyFormatted(markdown: document.text)
+                    showCopiedFeedback = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        showCopiedFeedback = false
+                    }
+                } label: {
+                    Image(systemName: showCopiedFeedback ? "checkmark" : "doc.on.clipboard")
+                }
+                .keyboardShortcut("c", modifiers: [.command, .shift])
+                .help("Copy Formatted (⌘⇧C)")
             }
 
             ToolbarItem(placement: .automatic) {

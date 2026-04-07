@@ -25,6 +25,7 @@ swift package resolve            # Resolve SPM dependencies
 - **View/Edit toggle**: Cmd+E přepíná mezi prohlížením a editací
 - **Dark mode**: `.preferredColorScheme(.dark)` na root view
 - **Search (Cmd+F or `/` in view mode)**: Search bar s počtem výskytů a navigací (next/prev). Current match oranžový, ostatní žluté. Cmd+G / Cmd+Shift+G pro next/prev, Enter pro next. V view mode klávesy `n`/`p` pro navigaci
+- **Copy Formatted (Cmd+Shift+C)**: Zkopíruje celý dokument jako formátovaný text (RTF) do schránky. Markdown se převede přes cmark-gfm na HTML, pak na RTF. Po vložení např. do e-mailu nebo Wordu zachová formátování (nadpisy, tučné, kód, tabulky). Toolbar ikona se po zkopírování na 1.5s změní na checkmark.
 - **Go to Line (Cmd+L)**: Skok na řádek s červeným zvýrazněním (fade-out po 2s). V markdown view scrolluje na blok obsahující cílový řádek
 - **Zoom (Cmd+=/Cmd-)**: Změna velikosti fontu 9–36pt, proporcionální škálování headings v markdown
 
@@ -34,7 +35,8 @@ swift package resolve            # Resolve SPM dependencies
 |--------|-------|
 | `Sources/KfsMd/KfsMdApp.swift` | @main, DocumentGroup, font registrace (Bundle.main → fallback SPM bundle) |
 | `Sources/KfsMd/MarkdownDocument.swift` | FileDocument protocol, UTType routing |
-| `Sources/KfsMd/Views/ContentView.swift` | Router: viewer vs editor, search state, go-to-line, zoom, toolbar shortcuts, ViewModeKeyHandler (klávesy `/`/`n`/`p`) |
+| `Sources/KfsMd/ClipboardHelper.swift` | Kopie formátovaného obsahu: markdown → HTML (cmark-gfm) → RTF → NSPasteboard |
+| `Sources/KfsMd/Views/ContentView.swift` | Router: viewer vs editor, search state, go-to-line, zoom, copy formatted, toolbar shortcuts, ViewModeKeyHandler (klávesy `/`/`n`/`p`) |
 | `Sources/KfsMd/Views/MarkdownViewerView.swift` | MarkdownUI rendered view s dynamickým fontSize |
 | `Sources/KfsMd/Views/PlainTextViewerView.swift` | Monospace plain text view, search highlighting (current match orange, others yellow), scroll-to-match |
 | `Sources/KfsMd/Views/EditorView.swift` | NSViewRepresentable (NSTextView) se search highlighting přes layoutManager |
@@ -79,7 +81,7 @@ brew install --cask kfs-md
 
 ## Dependency
 
-Jediná: `gonzalezreal/swift-markdown-ui` 2.4+ (MarkdownUI).
+Jediná: `gonzalezreal/swift-markdown-ui` 2.4+ (MarkdownUI). Transitively: `swiftlang/swift-cmark` (cmark-gfm, cmark-gfm-extensions) — used directly for Copy Formatted (markdown → HTML).
 
 ## Plánované (v2+)
 
