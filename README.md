@@ -27,6 +27,16 @@ brew install --cask kfs-md
 
 Grab the DMG from [Releases](https://github.com/k0fis/kfs-md/releases).
 
+### Removing quarantine (unsigned app)
+
+macOS Gatekeeper blocks unsigned apps downloaded from the internet. After installing, remove the quarantine attribute:
+
+```bash
+xattr -cr /Applications/kfs-md.app
+```
+
+Or via **System Settings → Privacy & Security** — click "Open Anyway" after the first launch attempt.
+
 ## Build from source
 
 ```bash
